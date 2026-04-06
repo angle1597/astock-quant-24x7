@@ -1,0 +1,11 @@
+requests>=2.31.0
+pandas>=2.0.0
+numpy>=1.24.0
+schedule>=1.2.0
+APScheduler>=3.10.0
+scikit-learn>=1.3.0
+lightgbm>=4.0.0
+akshare>=1.12.0
+efinance>=0.5.5
+baostock>=0.8.0
+tushare>=1.4.0

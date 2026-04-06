@@ -1,0 +1,98 @@
+name: A股量化选股系统
+
+on:
+  schedule:
+    # 每天9:15 早盘选股
+    - cron: '15 1 * * *'
+    # 每天14:45 盘中监控
+    - cron: '45 6 * * *'
+    # 每天15:05 尾盘总结
+    - cron: '5 7 * * *'
+    # 每周日20:00 回测
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+
+jobs:
+  stock-pick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests pandas numpy schedule akshare efinance baostock
+      
+      - name: Run morning pick
+        run: python quant-24x7/auto_runner.py once
+        env:
+          PYTHONIOENCODING: utf-8
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-picks
+          path: quant-24x7/reports/
+          retention-days: 30
+
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'schedule' && github.event.schedule == '0 12 * * 0'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests pandas numpy scikit-learn lightgbm akshare efinance baostock
+      
+      - name: Run backtest
+        run: python quant-24x7/auto_runner.py backtest
+        env:
+          PYTHONIOENCODING: utf-8
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-results
+          path: quant-24x7/data/
+          retention-days: 90
+
+  notify:
+    needs: stock-pick
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Download results
+        uses: actions/download-artifact@v4
+        with:
+          name: stock-picks
+      
+      - name: Get latest pick
+        id: get-pick
+        run: |
+          LATEST=$(ls -t reports/*.json 2>/dev/null | head -1)
+          if [ -n "$LATEST" ]; then
+            echo "file=$LATEST" >> $GITHUB_OUTPUT
+            cat $LATEST
+          fi
+      
+      - name: Send notification
+        if: steps.get-pick.outputs.file
+        run: |
+          echo "选股完成，已保存到 ${{ steps.get-pick.outputs.file }}"

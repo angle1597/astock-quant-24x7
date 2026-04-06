@@ -1,0 +1,5 @@
+2026-04-06 17:37:01,260 | INFO | Database initialized: data/stocks.db
+2026-04-06 17:37:01,261 | INFO | === Starting full market collection ===
+2026-04-06 17:37:04,139 | INFO | Eastmoney quotes: 100 stocks
+2026-04-06 17:37:04,162 | INFO | Saved 100 quotes to database
+2026-04-06 17:37:04,162 | INFO | === Full market collection completed ===
