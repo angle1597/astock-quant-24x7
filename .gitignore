@@ -1,0 +1,9 @@
+# Ignore temp directories
+*_temp/
+__pycache__/
+*.pyc
+*.db
+logs/
+data/
+reports/
+.env
