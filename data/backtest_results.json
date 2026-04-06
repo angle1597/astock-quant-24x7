@@ -1,0 +1,82 @@
+{
+  "test_date": "2026-04-06T17:47:44.013974",
+  "test_codes": 100,
+  "holding_days": 5,
+  "results": [
+    {
+      "strategy": "GoldenCross",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "MACDCross",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "RSI_30_70",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "RSI_40_60",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "BollingerBounce",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "VolumeBreakout_1.5x",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "VolumeBreakout_2.0x",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    },
+    {
+      "strategy": "MultiFactor",
+      "total_trades": 0,
+      "trades": [],
+      "win_rate": 0,
+      "avg_profit": 0,
+      "max_profit": 0,
+      "max_loss": 0
+    }
+  ],
+  "best_strategy": "GoldenCross",
+  "best_win_rate": 0,
+  "best_avg_profit": 0
+}
