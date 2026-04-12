@@ -17,6 +17,8 @@ import numpy as np
 # 导入技术指标
 sys.path.insert(0, os.path.dirname(__file__))
 from technical_analysis import TechnicalIndicators
+from stop_loss import StopLossStrategy, PositionManager
+from market_filter import MarketEnvironment
 
 class StrategyBase:
     """策略基类"""
@@ -271,6 +273,8 @@ class BacktestEngine:
     def __init__(self, db_path: str = 'data/stocks.db'):
         self.db_path = db_path
         self.strategies = self._register_strategies()
+        self.stop_loss = StopLossStrategy()
+        self.market_filter = MarketEnvironment()
     
     def _register_strategies(self) -> List[StrategyBase]:
         """注册所有策略"""

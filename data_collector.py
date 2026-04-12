@@ -333,6 +333,133 @@ class DataCollector:
             time.sleep(0.5)  # 避免请求过快
         
         self.logger.info(f'Collected klines for {len(codes)} stocks')
+    
+    def get_index_kline(self, code: str, days: int = 60) -> pd.DataFrame:
+        """
+        获取指数K线数据
+        
+        Args:
+            code: 指数代码 (如 '000001' 上证指数)
+            days: 天数
+        
+        Returns:
+            DataFrame: K线数据
+        """
+        try:
+            # 东方财富指数接口
+            secid = f'1.{code}' if code.startswith('0') else f'0.{code}'
+            url = f'https://push2his.eastmoney.com/api/qt/stock/kline/get'
+            params = {
+                'secid': secid,
+                'fields1': 'f1,f2,f3,f4,f5,f6',
+                'fields2': 'f51,f52,f53,f54,f55,f56,f57',
+                'klt': '101',  # 日K
+                'fqt': '0',
+                'end': '20500000',
+                'lmt': str(days)
+            }
+            
+            resp = self.session.get(url, params=params, timeout=10)
+            data = resp.json()
+            
+            if data.get('data') and data['data'].get('klines'):
+                klines = data['data']['klines']
+                rows = []
+                for kline in klines:
+                    parts = kline.split(',')
+                    rows.append({
+                        'date': parts[0],
+                        'open': float(parts[1]),
+                        'close': float(parts[2]),
+                        'high': float(parts[3]),
+                        'low': float(parts[4]),
+                        'volume': float(parts[5]),
+                        'amount': float(parts[6])
+                    })
+                
+                df = pd.DataFrame(rows)
+                df['change_pct'] = df['close'].pct_change() * 100
+                return df
+            
+            return pd.DataFrame()
+            
+        except Exception as e:
+            self.logger.error(f'获取指数K线失败: {e}')
+            return pd.DataFrame()
+    
+    def get_limit_up_count(self) -> int:
+        """
+        获取涨停股票数量
+        
+        Returns:
+            int: 涨停股票数量
+        """
+        try:
+            # 东方财富涨停板接口
+            url = 'https://push2.eastmoney.com/api/qt/clist/get'
+            params = {
+                'pn': 1,
+                'pz': 500,
+                'po': 1,
+                'np': 1,
+                'fltt': 2,
+                'invt': 2,
+                'fid': 'f3',
+                'fs': 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23',
+                'fields': 'f12,f14,f2,f3'
+            }
+            
+            resp = self.session.get(url, params=params, timeout=10)
+            data = resp.json()
+            
+            if data.get('data') and data['data'].get('diff'):
+                stocks = data['data']['diff']
+                # 涨停股票: 涨幅 >= 9.9%
+                limit_up = [s for s in stocks if s.get('f3', 0) >= 9.9]
+                return len(limit_up)
+            
+            return 0
+            
+        except Exception as e:
+            self.logger.error(f'获取涨停数量失败: {e}')
+            return 0
+    
+    def get_limit_down_count(self) -> int:
+        """
+        获取跌停股票数量
+        
+        Returns:
+            int: 跌停股票数量
+        """
+        try:
+            # 东方财富跌停板接口
+            url = 'https://push2.eastmoney.com/api/qt/clist/get'
+            params = {
+                'pn': 1,
+                'pz': 500,
+                'po': 1,
+                'np': 1,
+                'fltt': 2,
+                'invt': 2,
+                'fid': 'f3',
+                'fs': 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23',
+                'fields': 'f12,f14,f2,f3'
+            }
+            
+            resp = self.session.get(url, params=params, timeout=10)
+            data = resp.json()
+            
+            if data.get('data') and data['data'].get('diff'):
+                stocks = data['data']['diff']
+                # 跌停股票: 涨幅 <= -9.9%
+                limit_down = [s for s in stocks if s.get('f3', 0) <= -9.9]
+                return len(limit_down)
+            
+            return 0
+            
+        except Exception as e:
+            self.logger.error(f'获取跌停数量失败: {e}')
+            return 0
 
 
 def main():

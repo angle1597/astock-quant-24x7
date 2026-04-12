@@ -17,6 +17,7 @@ import random
 
 # 导入本地模块
 from data_collector import DataCollector
+from feishu_notify import get_notifier
 
 # 配置日志
 os.makedirs('logs', exist_ok=True)
@@ -288,6 +289,7 @@ class AutoRunner:
         self.picker = StockPicker(self.collector)
         self.optimizer = StrategyOptimizer(self.collector)
         self.reporter = ReportGenerator()
+        self.notifier = get_notifier()  # 飞书通知器
         
         SYSTEM_STATE['start_time'] = datetime.now().isoformat()
     
@@ -342,12 +344,18 @@ class AutoRunner:
             for i, pick in enumerate(picks[:3], 1):
                 logger.info(f"{i}. {pick['code']} {pick['name']} - Score: {pick['score']}")
             
+            # 发送飞书通知
+            date_str = datetime.now().strftime('%Y-%m-%d')
+            self.notifier.send_stock_pick(picks, date_str)
+            
             SYSTEM_STATE['last_run']['morning_pick'] = datetime.now().isoformat()
             SYSTEM_STATE['pick_count'] += 1
             
         except Exception as e:
             logger.error(f'Morning pick failed: {e}')
             SYSTEM_STATE['error_count'] += 1
+            # 发送错误告警
+            self.notifier.send_error_alert('morning_pick', str(e))
     
     def run_monitoring(self):
         """盘中监控"""
@@ -375,6 +383,10 @@ class AutoRunner:
                 logger.info(f'Found {len(high_score)} high-score stocks')
                 for p in high_score[:3]:
                     logger.info(f"  {p['code']} {p['name']}: {p['score']}pts")
+            
+            # 发送盘中监控通知
+            time_str = datetime.now().strftime('%H:%M')
+            self.notifier.send_monitoring(picks, time_str)
             
             SYSTEM_STATE['last_run']['monitoring'] = datetime.now().isoformat()
             
@@ -422,9 +434,21 @@ class AutoRunner:
             
             logger.info(f'Weekly backtest completed, new criteria: {new_criteria}')
             
+            # 发送回测结果通知
+            backtest_result = {
+                'period': '本周',
+                'total_trades': new_criteria.get('total_trades', 0),
+                'win_rate': new_criteria.get('win_rate', 0),
+                'avg_return': new_criteria.get('avg_return', 0),
+                'max_drawdown': new_criteria.get('max_drawdown', 0),
+                'suggestions': new_criteria.get('suggestions', [])
+            }
+            self.notifier.send_backtest_result(backtest_result)
+            
         except Exception as e:
             logger.error(f'Weekly backtest failed: {e}')
             SYSTEM_STATE['error_count'] += 1
+            self.notifier.send_error_alert('weekly_backtest', str(e))
     
     def run_scheduler(self):
         """调度器"""
@@ -434,10 +458,10 @@ class AutoRunner:
         # 交易时段每30分钟监控
         for hour in range(9, 16):
             if hour == 9:
-                schedule.every().day.at(f"{hour}:30").do(self.run_monitoring)
+                schedule.every().day.at(f"{hour:02d}:30").do(self.run_monitoring)
             elif 10 <= hour <= 14:
-                schedule.every().day.at(f"{hour}:00").do(self.run_monitoring)
-                schedule.every().day.at(f"{hour}:30").do(self.run_monitoring)
+                schedule.every().day.at(f"{hour:02d}:00").do(self.run_monitoring)
+                schedule.every().day.at(f"{hour:02d}:30").do(self.run_monitoring)
             elif hour == 15:
                 schedule.every().day.at("15:05").do(self.run_evening_summary)
         
